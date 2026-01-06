@@ -111,11 +111,13 @@ Running modify_cv takes in the following inputs and outputs the modified CVs in 
 
 It outputs a csv, timestamped, with one column corresponding to the modified resume/CV text. 
 
-To test modify_cv.py with our example files and anti-hallucination-prompt, per described in our manuscript, run in the root directory of this folder: 
+To test modify_cv.py with our example files and anti-hallucination-prompt, per described in our manuscript, run in the root directory of this folder:
 
+```bash
+python modify_cv.py sample_input_data/example_input_cvs/three_example_cvs.csv sample_input_data/example_output_data --prompt-template sample_input_data/example_prompts/anti_hallucination_llm_prompt.txt --prompt-job-description sample_input_data/example_job_descriptions/PM_job_descriptions/doordash_pm.txt --provider openai --api-key api_keys.yaml
 ```
-python3 modify_cv.py sample_input_data/example_input_cvs/three_example_cvs.csv sample_input_data/example_output_data --prompt-template sample_input_data/example_prompts/anti_hallucination_llm_prompt.txt --prompt-job-description sample_input_data/example_job_descriptions/PM_job_descriptions/doordash_pm.txt --provider openai --api-key llm_api_keys.yaml 
-```
+
+**Note:** Use `python` instead of `python3` to ensure you're using the conda environment. Replace `api_keys.yaml` with your actual API keys file name.
 
 #### Inputs and Outputs for `score_cv`
 
@@ -141,10 +143,10 @@ The `score_cv` function takes the following inputs and outputs the scores of the
    - **Optional**  
    - **Default**: `"DoorDash PM"` (see above for description).
 
-It is natural to run score_cv.py on the output resumes of modify_cv.py (and input resumes too). To test score_cv.py with our example files, run in the root directory of this folder: 
+It is natural to run score_cv.py on the output resumes of modify_cv.py (and input resumes too). To test score_cv.py with our example files, run in the root directory of this folder:
 
-```
-python3 score_cv.py sample_input_data/example_input_cvs/three_example_cvs.csv sample_input_data/example_output_data --job-description sample_input_data/example_job_descriptions/PM_job_descriptions/doordash_pm.txt --job-name DoorDash
+```bash
+python score_cv.py --resumes sample_input_data/example_input_cvs/three_example_cvs.csv --output-dir sample_input_data/example_output_data --job-description sample_input_data/example_job_descriptions/PM_job_descriptions/doordash_pm.txt --job-name DoorDash
 ```
 
 ## Experiments
@@ -153,6 +155,22 @@ After generating and scoring our resumes on the relevant job descriptions, we al
 
 - **Evaluating the Two-Ticket System**: [significance_tests.ipynb](Table1_Experimental_Modified_Resumes/validation_tests/signifiance_test.ipynb) Implements our Two-Ticket Algorithm and demonstrates how it compares against traditional Threshold Classifiers (Section 7 of our paper).
 - **Comparing Different LLMs**: [final_figures.ipynb](final_figures.ipynb) Code to create final figures comparing the effecitiveness of different LLMs against different job descriptions (Section 3 of our paper and Appendix Section B). 
+
+## Known Issues and Fixes
+
+Issues found during code reproduction that prevented out-of-the-box execution:
+
+1. **`score_cv.py`** - Expected `'id'` column, but CSV uses unnamed first column. Fixed by changing `index_col='id'` to `index_col=0` (line 146).
+
+2. **`modify_cv.py`** - Expected `services -> provider -> api_key` YAML structure. Fixed by adding support for both formats (lines 546-549).
+
+3. **Missing embeddings** - `final_figures.ipynb` requires `.npy` files in `Figure1_100Samples/Embeddings/` but no generation script exists.
+
+4. **`consistency_checks.ipynb`** - Incorrect column names caused KeyErrors. Fixed by updating to match actual CSV structure.
+
+5. **Incorrect README commands** - Fixed example commands to use proper argument syntax and correct file names.
+
+6. **Python interpreter** - Changed from `python3` to `python` to ensure conda environment is used.
 
 ## Citation
 
