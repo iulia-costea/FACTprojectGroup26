@@ -542,8 +542,11 @@ if __name__ == "__main__":
 
     with open(str(args.api_key), 'r') as file:
         config = yaml.safe_load(file)
-    
-    user_input_api_key = config['services'][args.provider]['api_key']
+
+    if 'services' in config:
+        user_input_api_key = config['services'][args.provider]['api_key']
+    else:
+        user_input_api_key = config[args.provider]['api_key']
  
     #Format parse-args to input into client initialization below. 
     prompt_template_path = args.prompt_template

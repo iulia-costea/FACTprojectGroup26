@@ -1,0 +1,6 @@
+api_keys.yaml
+__pycache__/constants.cpython-310.pyc
+local_model/.lock
+local_model/collection/demo_collection/storage.sqlite
+.gitignore
+local_model/meta.json
