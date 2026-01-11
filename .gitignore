@@ -4,3 +4,8 @@ local_model/.lock
 local_model/collection/demo_collection/storage.sqlite
 .gitignore
 local_model/meta.json
+Figure1_100Samples/Embeddings/
+img
+sample_input_data
+testing_scripts
+__pycache__
