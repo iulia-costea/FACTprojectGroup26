@@ -46,6 +46,9 @@ time_sleep_anthropic = 20
 time_sleep_openai=20
 MAX_TOKENS=1024
 openai_individual_batch_threshold=5
+# Set to a high number to force individual calls with checkpointing for large datasets
+# Change this to force checkpoint saving: set to 10000 to always use individual calls
+openai_force_individual_calls_threshold=10000
 
 #Set up Prompts Code
 def read_template(template_path):
@@ -78,6 +81,11 @@ class AnthropicClient:
         self.prompt_template = prompt_template
         self.prompt_job_description_filename = prompt_job_desc_filename if prompt_job_desc_filename else ''
         self.prompt_job_description = prompt_job_description if prompt_job_description else ''
+        self.num_generated = 0
+
+        current_datetime = datetime.now()
+        current_datetime_str = current_datetime.strftime('%Y_%m_%d_%H_%M_%S')
+        self.time_marker = current_datetime_str
 
         return 
     
@@ -100,21 +108,75 @@ class AnthropicClient:
         )
         return return_request
 
-    def generate_group_of_cv_s(self, cv_s_dataframe: pd.DataFrame) -> List[str]:
+    def __generate_individual_cv(self, input_cv: str) -> str:
+        #Private Method: Generate a single CV using individual API call
+        messages = self.format_messages(input_cv=input_cv)
+        try:
+            response = self.client.messages.create(
+                model=self.model,
+                max_tokens=MAX_TOKENS,
+                messages=messages
+            )
+            self.num_generated += 1
+            print(f"Generated {self.num_generated} resume.")
+            return response.content[0].text
+        except Exception as e:
+            print(f"Error generating CV: {e}")
+            return "not_successfully_modified"
+
+    def __generate_group_of_cv_s_from_individual_calls(self, cv_s_dataframe: pd.DataFrame, checkpoint_every: int = 10):
+        #Generate CVs using individual API calls with checkpoint saving
+        if len(cv_s_dataframe.columns) > 1:
+            raise Exception("More than one column of resumes inputted. Please reformat input to only contain one column")
+
+        to_be_modified_col = cv_s_dataframe.columns[-1]
+        modified_col_name = f"Modified_{self.model}_of_{to_be_modified_col}_Model{self.model}"
+
+        generated_cvs = []
+        for i, cv in enumerate(cv_s_dataframe[to_be_modified_col]):
+            try:
+                generated_cvs.append(self.__generate_individual_cv(input_cv=cv))
+
+                # Save checkpoint every N resumes
+                if (i + 1) % checkpoint_every == 0:
+                    checkpoint_df = pd.DataFrame()
+                    checkpoint_df[modified_col_name] = generated_cvs
+                    checkpoint_file = f"checkpoint_anthropic_{self.model}_{self.time_marker}_step_{i+1}.csv"
+                    checkpoint_df.to_csv(checkpoint_file)
+                    print(f"Checkpoint saved: {checkpoint_file}")
+            except Exception as e:
+                print(f"Error generating CV {i}: {e}")
+                # Save what we have so far
+                checkpoint_df = pd.DataFrame()
+                checkpoint_df[modified_col_name] = generated_cvs
+                checkpoint_file = f"checkpoint_anthropic_{self.model}_{self.time_marker}_ERROR_at_step_{i}.csv"
+                checkpoint_df.to_csv(checkpoint_file)
+                print(f"Error checkpoint saved: {checkpoint_file}")
+                raise
+
+        cv_s_dataframe[modified_col_name] = generated_cvs
+        return cv_s_dataframe[[modified_col_name]]
+
+    def generate_group_of_cv_s(self, cv_s_dataframe: pd.DataFrame, use_individual_calls: bool = True) -> List[str]:
         #Public Method - generates modified CVs from dataframe of inputted CVs.
+        # Use individual calls by default to avoid batch API issues
+
+        if use_individual_calls:
+            print(f"Using individual API calls with checkpoint saving for {len(cv_s_dataframe)} CVs")
+            return self.__generate_group_of_cv_s_from_individual_calls(cv_s_dataframe)
 
         if len(cv_s_dataframe.columns)>1:
             raise Exception("More than one column of resumes inputted. Please reformat input to only contain one column")
-        
+
         to_be_modified_col = cv_s_dataframe.columns[-1]
-        modified_col_name = f"Modified_{self.model}_of_{to_be_modified_col}_Model{self.model}" 
+        modified_col_name = f"Modified_{self.model}_of_{to_be_modified_col}_Model{self.model}"
 
         original_cv_s = list(cv_s_dataframe[to_be_modified_col])
 
         #Formats all input CVs in a list of Request objects.
         cv_batch_requests = [self.__client_api_call_function_request_input_cv(input_cv=original_cv_s[i], id=i) for i in range(len(original_cv_s))]
 
-        #Creates a Batch object from these CV Requests. 
+        #Creates a Batch object from these CV Requests.
         cv_batch_requests_output = self.client.beta.messages.batches.create(requests=cv_batch_requests)
         batch_id = cv_batch_requests_output.id
 
@@ -199,7 +261,7 @@ class DeepSeekClient:
         print(f"Generated {self.num_generated} resume.")
         return output
 
-    def __generate_group_of_cv_s_from_individual_calls(self, cv_s_dataframe: pd.DataFrame):
+    def __generate_group_of_cv_s_from_individual_calls(self, cv_s_dataframe: pd.DataFrame, checkpoint_every: int = 10):
         # Generate modified column name
         if len(cv_s_dataframe.columns) > 1:
             raise Exception("More than one column of resumes inputted. Please reformt input to only contain one column")
@@ -207,15 +269,28 @@ class DeepSeekClient:
         to_be_modified_col = cv_s_dataframe.columns[-1]
         modified_col_name = f"Modified_{self.model}_of_{to_be_modified_col}_Model{self.model}"
 
-        # Generate resumes together.
+        # Generate resumes with checkpoint saving
         generated_cvs = []
         for i, cv in enumerate(cv_s_dataframe[to_be_modified_col]):
             try:
                 generated_cvs.append(self.__generate_individal_cv(input_cv=cv))
-            except:
+
+                # Save checkpoint every N resumes
+                if (i + 1) % checkpoint_every == 0:
+                    checkpoint_df = pd.DataFrame()
+                    checkpoint_df[modified_col_name] = generated_cvs
+                    checkpoint_file = f"checkpoint_deepseek_{self.model}_{self.time_marker}_step_{i+1}.csv"
+                    checkpoint_df.to_csv(checkpoint_file)
+                    print(f"Checkpoint saved: {checkpoint_file}")
+            except Exception as e:
+                print(f"Error generating CV {i}: {e}")
+                # Save what we have so far
                 new_df = pd.DataFrame()
                 new_df[modified_col_name] = generated_cvs
-                new_df.to_csv(f"saved_generations_step_{i}.csv")
+                checkpoint_file = f"checkpoint_deepseek_{self.model}_{self.time_marker}_ERROR_at_step_{i}.csv"
+                new_df.to_csv(checkpoint_file)
+                print(f"Error checkpoint saved: {checkpoint_file}")
+                raise
 
         cv_s_dataframe[modified_col_name] = generated_cvs
         return cv_s_dataframe[[modified_col_name]]
@@ -387,24 +462,50 @@ class OpenAIClient:
         print(f"Generated {self.num_generated} resume.")
         return output
 
-    def __generate_group_of_cv_s_from_individual_calls(self, cv_s_dataframe: pd.DataFrame):
+    def __generate_group_of_cv_s_from_individual_calls(self, cv_s_dataframe: pd.DataFrame, checkpoint_every: int = 10):
         #Generate modified column name
         if len(cv_s_dataframe.columns)>1:
             raise Exception("More than one column of resumes inputted. Please reformt input to only contain one column")
-        
-        to_be_modified_col = cv_s_dataframe.columns[-1]
-        modified_col_name = f"Modified_{self.model}_of_{to_be_modified_col}_Model{self.model}" 
 
-        #Generate resumes together.
-        generate = lambda cv : self.__generate_individal_cv(input_cv = cv)
-        cv_s_dataframe[modified_col_name]= cv_s_dataframe[to_be_modified_col].apply(generate)
+        to_be_modified_col = cv_s_dataframe.columns[-1]
+        modified_col_name = f"Modified_{self.model}_of_{to_be_modified_col}_Model{self.model}"
+
+        #Generate resumes with checkpoint saving
+        generated_cvs = []
+        for i, cv in enumerate(cv_s_dataframe[to_be_modified_col]):
+            try:
+                generated_cvs.append(self.__generate_individal_cv(input_cv = cv))
+
+                # Save checkpoint every N resumes
+                if (i + 1) % checkpoint_every == 0:
+                    checkpoint_df = pd.DataFrame()
+                    checkpoint_df[modified_col_name] = generated_cvs
+                    checkpoint_file = f"checkpoint_openai_{self.model}_{self.time_marker}_step_{i+1}.csv"
+                    checkpoint_df.to_csv(checkpoint_file)
+                    print(f"Checkpoint saved: {checkpoint_file}")
+            except Exception as e:
+                print(f"Error generating CV {i}: {e}")
+                # Save what we have so far
+                checkpoint_df = pd.DataFrame()
+                checkpoint_df[modified_col_name] = generated_cvs
+                checkpoint_file = f"checkpoint_openai_{self.model}_{self.time_marker}_ERROR_at_step_{i}.csv"
+                checkpoint_df.to_csv(checkpoint_file)
+                print(f"Error checkpoint saved: {checkpoint_file}")
+                raise
+
+        cv_s_dataframe[modified_col_name] = generated_cvs
         return cv_s_dataframe[[modified_col_name]]
     
-    def generate_group_of_cv_s(self, cv_s_dataframe: pd.DataFrame):
+    def generate_group_of_cv_s(self, cv_s_dataframe: pd.DataFrame, use_checkpoints: bool = True):
         #Wrappper function that generates group of cv-s with either individual requests to LLM API (if size small enough) or batch requests to LLM API.
-        if len(cv_s_dataframe)<=openai_individual_batch_threshold:
+        # For large datasets, use individual calls with checkpointing for safety
+        if use_checkpoints and len(cv_s_dataframe) > openai_individual_batch_threshold:
+            print(f"Using individual API calls with checkpoint saving for {len(cv_s_dataframe)} CVs (safer for large batches)")
+            return self.__generate_group_of_cv_s_from_individual_calls(cv_s_dataframe)
+        elif len(cv_s_dataframe)<=openai_individual_batch_threshold:
             return self.__generate_group_of_cv_s_from_individual_calls(cv_s_dataframe)
         else:
+            print(f"Using batch API for {len(cv_s_dataframe)} CVs (no checkpointing available)")
             return self.__generate_group_of_cv_s_batch(cv_s_dataframe)
 
 
@@ -444,20 +545,39 @@ class TogetherAIClient:
         print(f"Generated {self.num_generated} resume.")
         return output
 
-    def generate_group_of_cv_s(self, cv_s_dataframe: pd.DataFrame):
+    def generate_group_of_cv_s(self, cv_s_dataframe: pd.DataFrame, checkpoint_every: int = 10):
         # Iteratively class the above __generate_one_cv function on resumes in our dataframe.
         if len(cv_s_dataframe.columns)>1:
             print(cv_s_dataframe.columns)
             raise Exception("More than one column of resumes inputted. Please reformt input to only contain one column")
-        
+
         to_be_modified_col = cv_s_dataframe.columns[-1]
         modified_col_name = f"Modified_{self.model}_of_{to_be_modified_col}_Model{self.model}"
 
-        #Iterative calls with Lambda Function
-        generate = lambda cv : self.__generate_one_cv(input_cv = cv)
-        cv_s_dataframe[modified_col_name]= cv_s_dataframe[to_be_modified_col].apply(generate)
+        # Generate resumes with checkpoint saving
+        generated_cvs = []
+        for i, cv in enumerate(cv_s_dataframe[to_be_modified_col]):
+            try:
+                generated_cvs.append(self.__generate_one_cv(input_cv=cv))
 
-        #Saves output results.
+                # Save checkpoint every N resumes
+                if (i + 1) % checkpoint_every == 0:
+                    checkpoint_df = pd.DataFrame()
+                    checkpoint_df[modified_col_name] = generated_cvs
+                    checkpoint_file = f"checkpoint_together_{self.model.replace('/', '_')}_{i+1}.csv"
+                    checkpoint_df.to_csv(checkpoint_file)
+                    print(f"Checkpoint saved: {checkpoint_file}")
+            except Exception as e:
+                print(f"Error generating CV {i}: {e}")
+                # Save what we have so far
+                checkpoint_df = pd.DataFrame()
+                checkpoint_df[modified_col_name] = generated_cvs
+                checkpoint_file = f"checkpoint_together_{self.model.replace('/', '_')}_ERROR_at_step_{i}.csv"
+                checkpoint_df.to_csv(checkpoint_file)
+                print(f"Error checkpoint saved: {checkpoint_file}")
+                raise
+
+        cv_s_dataframe[modified_col_name] = generated_cvs
         return cv_s_dataframe[[modified_col_name]]
 
 
