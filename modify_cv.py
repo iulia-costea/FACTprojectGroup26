@@ -509,6 +509,89 @@ class OpenAIClient:
             return self.__generate_group_of_cv_s_batch(cv_s_dataframe)
 
 
+class OpenRouterClient:
+    """OpenRouter-specific implementation (OpenAI-compatible API)"""
+    def __init__(self, input_api_key: str, model: str, prompt_template_path: str, prompt_template: str,
+                 prompt_job_desc_filename: str, prompt_job_description: str):
+        # Initialize API client with api keys & model
+        self.client = OpenAI(
+            api_key=input_api_key,
+            base_url="https://openrouter.ai/api/v1"
+        )
+        self.model = model if model else "anthropic/claude-3.5-sonnet"
+        self.prompt_template_path = prompt_template_path
+        self.prompt_template = prompt_template
+        self.prompt_job_description_filename = prompt_job_desc_filename if prompt_job_desc_filename else ''
+        self.prompt_job_description = prompt_job_description if prompt_job_description else ''
+
+        current_datetime = datetime.now()
+        current_datetime_str = current_datetime.strftime('%Y_%m_%d_%H_%M_%S')
+        self.time_marker = current_datetime_str
+        self.num_generated = 0
+
+        return
+
+    def format_messages(self, input_cv: str):
+        if self.prompt_template_path.endswith('.json'):
+            return format_message_json(self.prompt_template, input_cv, self.prompt_job_description)
+        return format_message_txt(prompt_template=self.prompt_template, input_cv=input_cv,
+                                  job_desc=self.prompt_job_description)
+
+    def __client_api_call_function(self, messages) -> str:
+        # Private Method: API call to OpenRouter
+        response = self.client.chat.completions.create(
+            model=self.model,
+            messages=messages
+        )
+        output = response.choices[0].message.content
+        return output
+
+    def __generate_individual_cv(self, input_cv: str) -> str:
+        messages = self.format_messages(input_cv=input_cv)
+        output: str = self.__client_api_call_function(messages)
+        self.num_generated += 1
+        print(f"Generated {self.num_generated} resume.")
+        return output
+
+    def __generate_group_of_cv_s_from_individual_calls(self, cv_s_dataframe: pd.DataFrame, checkpoint_every: int = 10):
+        # Generate modified column name
+        if len(cv_s_dataframe.columns) > 1:
+            raise Exception("More than one column of resumes inputted. Please reformat input to only contain one column")
+
+        to_be_modified_col = cv_s_dataframe.columns[-1]
+        modified_col_name = f"Modified_{self.model.replace('/', '_')}_of_{to_be_modified_col}_Model{self.model.replace('/', '_')}"
+
+        # Generate resumes with checkpoint saving
+        generated_cvs = []
+        for i, cv in enumerate(cv_s_dataframe[to_be_modified_col]):
+            try:
+                generated_cvs.append(self.__generate_individual_cv(input_cv=cv))
+
+                # Save checkpoint every N resumes
+                if (i + 1) % checkpoint_every == 0:
+                    checkpoint_df = pd.DataFrame()
+                    checkpoint_df[modified_col_name] = generated_cvs
+                    checkpoint_file = f"checkpoint_openrouter_{self.model.replace('/', '_')}_{self.time_marker}_step_{i+1}.csv"
+                    checkpoint_df.to_csv(checkpoint_file)
+                    print(f"Checkpoint saved: {checkpoint_file}")
+            except Exception as e:
+                print(f"Error generating CV {i}: {e}")
+                # Save what we have so far
+                checkpoint_df = pd.DataFrame()
+                checkpoint_df[modified_col_name] = generated_cvs
+                checkpoint_file = f"checkpoint_openrouter_{self.model.replace('/', '_')}_{self.time_marker}_ERROR_at_step_{i}.csv"
+                checkpoint_df.to_csv(checkpoint_file)
+                print(f"Error checkpoint saved: {checkpoint_file}")
+                raise
+
+        cv_s_dataframe[modified_col_name] = generated_cvs
+        return cv_s_dataframe[[modified_col_name]]
+
+    def generate_group_of_cv_s(self, cv_s_dataframe: pd.DataFrame):
+        # For OpenRouter: generate CVs from individual calls
+        return self.__generate_group_of_cv_s_from_individual_calls(cv_s_dataframe)
+
+
 class TogetherAIClient:
     """TogetherAI-specific implementation"""
     def __init__(self, input_api_key:str, model: str, prompt_template_path:str, prompt_template:str, prompt_job_desc_filename:str, prompt_job_description: str):
@@ -620,7 +703,7 @@ def parse_args() -> argparse.Namespace:
     provider_group = parser.add_argument_group('LLM Provider Options')
     provider_group.add_argument(
         "--provider",
-        choices=["anthropic", "openai", "together", "deepseek"],
+        choices=["anthropic", "openai", "together", "deepseek", "openrouter"],
         default="anthropic",
         help="LLM provider to use"
     )
@@ -704,6 +787,13 @@ if __name__ == "__main__":
                               prompt_template_path=str(prompt_template_path),
                               prompt_job_desc_filename=prompt_job_description_name,
                               prompt_job_description=prompt_job_description_str)
+    elif args.provider == 'openrouter':
+        client = OpenRouterClient(input_api_key=user_input_api_key,
+                                 model=args.model,
+                                 prompt_template=formatted_prompt_template,
+                                 prompt_template_path=str(prompt_template_path),
+                                 prompt_job_desc_filename=prompt_job_description_name,
+                                 prompt_job_description=prompt_job_description_str)
     else:
         raise ValueError("Provider client not found")
 
