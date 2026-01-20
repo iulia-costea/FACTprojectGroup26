@@ -80,7 +80,7 @@ def return_scores(cv_s_dataframe: pd.DataFrame, job_name: str, job_description: 
     scores_df[score_column_name] = pd.NA
 
     # Score resumes.
-    score = lambda resume : get_score(input_resume = resume, job_description = job_description, verbose = verbose)
+    score = lambda resume : get_score(input_resume = resume, job_description = job_description, verbose = verbose) if pd.notna(resume) else pd.NA
     scores_df[score_column_name] = cv_s_dataframe[cv_column_name].progress_apply(score)
     return scores_df[[score_column_name]]
 
