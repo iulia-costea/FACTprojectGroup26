@@ -8,5 +8,7 @@ Figure1_100Samples/Embeddings/
 img
 sample_input_data
 testing_scripts
+checkpoints/
+requirements.txt
 __pycache__
 .DS_Store
