@@ -159,6 +159,7 @@ if __name__ == "__main__":
     # Process each resume CSV
     for resume_path in args.resumes:
         df = pd.read_csv(resume_path, index_col=0)
+        df = df.head(50)  # only the first 50 resumes
         optimized_results = []
 
         for i, cv in enumerate(df[df.columns[-1]]):
