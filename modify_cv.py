@@ -91,6 +91,10 @@ class OpenRouterClient:
         self.prompt_job_description = prompt_job_description or ''
         self.num_generated = 0
 
+        current_datetime = datetime.now()
+        current_datetime_str = current_datetime.strftime('%Y_%m_%d_%H_%M_%S')
+        self.time_marker = current_datetime_str
+
     def format_messages(self, input_cv: str):
         if self.prompt_template_path.endswith('.json'):
             return format_message_json(
@@ -117,7 +121,7 @@ class OpenRouterClient:
         print(f"Generated {self.num_generated} resume.")
         return output
 
-    def generate_group_of_cv_s(self, cv_s_dataframe: pd.DataFrame):
+    def generate_group_of_cv_s(self, cv_s_dataframe: pd.DataFrame, checkpoint_every: int = 10):
         if len(cv_s_dataframe.columns) > 1:
             raise Exception("More than one column of resumes inputted.")
 
@@ -125,8 +129,26 @@ class OpenRouterClient:
         out_col = f"Modified_{self.model}_of_{col}_Model{self.model}"
 
         results = []
-        for cv in cv_s_dataframe[col]:
-            results.append(self.__generate_one_cv(cv))
+        for i, cv in enumerate(cv_s_dataframe[col]):
+            try:
+                results.append(self.__generate_one_cv(cv))
+
+                # Save checkpoint every N resumes
+                if (i + 1) % checkpoint_every == 0:
+                    checkpoint_df = pd.DataFrame()
+                    checkpoint_df[out_col] = results
+                    checkpoint_file = f"checkpoint_openrouter_{self.model.replace('/', '_')}_{self.time_marker}_step_{i+1}.csv"
+                    checkpoint_df.to_csv(checkpoint_file)
+                    print(f"Checkpoint saved: {checkpoint_file}")
+            except Exception as e:
+                print(f"Error generating CV {i}: {e}")
+                # Save what we have so far
+                checkpoint_df = pd.DataFrame()
+                checkpoint_df[out_col] = results
+                checkpoint_file = f"checkpoint_openrouter_{self.model.replace('/', '_')}_{self.time_marker}_ERROR_at_step_{i}.csv"
+                checkpoint_df.to_csv(checkpoint_file)
+                print(f"Error checkpoint saved: {checkpoint_file}")
+                raise
 
         cv_s_dataframe[out_col] = results
         return cv_s_dataframe[[out_col]]
