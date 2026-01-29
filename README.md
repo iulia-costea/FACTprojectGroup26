@@ -1,3 +1,15 @@
+> ⚠️ **Repository Note**
+>
+> This repository is a reproduction and extension of the original codebase for  
+> *Two Tickets are Better than One: Fair and Accurate Hiring Under Strategic LLM Manipulations*  
+> by Cohen et al.  
+>
+> In addition to reproducing the original experiments, this version includes
+> implementation fixes, clarifications, and new analyses that are **not present in the original repository**.
+> All original credit belongs to the paper's authors.
+> Please refer to sections "Known Issues and Fixes" and "Further Work" for our contributions to the repository
+
+
 ## Two Tickets are Better than One: Fair and Accurate Hiring Under Strategic LLM Manipulations
 
 This repository contains code and experiments for the ICML paper [Two Tickets are Better than One: Fair and Accurate Hiring Under Strategic LLM Manipulations](https://www.arxiv.org/abs/2502.13221).
@@ -156,6 +168,18 @@ After generating and scoring our resumes on the relevant job descriptions, we al
 - **Evaluating the Two-Ticket System**: [significance_tests.ipynb](Table1_Experimental_Modified_Resumes/validation_tests/signifiance_test.ipynb) Implements our Two-Ticket Algorithm and demonstrates how it compares against traditional Threshold Classifiers (Section 7 of our paper).
 - **Comparing Different LLMs**: [final_figures.ipynb](final_figures.ipynb) Code to create final figures comparing the effecitiveness of different LLMs against different job descriptions (Section 3 of our paper and Appendix Section B). 
 
+## Citation
+
+If you use this code or find it helpful, please cite our paper:
+```
+@article{cohen2025ticketsbetteronefair,
+  title={Two Tickets are Better than One: Fair and Accurate Hiring Under Strategic LLM Manipulations},
+  author={Cohen, Lee and Hsieh, Jack and Hong, Connie, and Shen, Judy},
+  journal={arXiv preprint arXiv:2502.13221},
+  year={2025}
+}
+```
+
 ## Known Issues and Fixes
 
 Issues found during code reproduction that prevented out-of-the-box execution:
@@ -172,14 +196,41 @@ Issues found during code reproduction that prevented out-of-the-box execution:
 
 6. **Python interpreter** - Changed from `python3` to `python` to ensure conda environment is used.
 
-## Citation
+7. **`env.yml`** - Original environment file had dependency conflicts and incompatible package versions that prevented successful conda environment creation. Updated with compatible package versions and resolved dependency issues to enable proper installation.
 
-If you use this code or find it helpful, please cite our paper:
-```
-@article{cohen2025ticketsbetteronefair,
-  title={Two Tickets are Better than One: Fair and Accurate Hiring Under Strategic LLM Manipulations},
-  author={Cohen, Lee and Hsieh, Jack and Hong, Connie, and Shen, Judy},
-  journal={arXiv preprint arXiv:2502.13221},
-  year={2025}
-}
-```
+## Further Work
+
+This reproduction includes additional analyses and visualizations beyond the original repository:
+
+### Additional Visualizations
+
+**Claim 2 Analysis: Resume Score Distributions Under LLM Manipulations**
+
+1. **[claim_2_doordash_pm.ipynb](claim_2_doordash_pm.ipynb)** - Generates violin plots comparing resume scores under different LLM manipulations for the DoorDash Product Manager role. Visualizes score distributions for 7 manipulation models (Claude-Sonnet-4, DeepSeek-Chat, GPT-3.5-Turbo, GPT-4o, GPT-4o-mini, Llama-3.3-70B, Mixtral-8x7B) vs no manipulation baseline, separated by qualified/unqualified status.
+
+2. **[claim_2_google_ux.ipynb](claim_2_google_ux.ipynb)** - Same analysis as above but for the Google UX Designer role. Compares scores across the same 7 LLM manipulation models to demonstrate effects of strategic resume modifications.
+
+**Claim 3 Analysis: Binary Classification Performance**
+
+3. **[claim_3_google_ux.ipynb](claim_3_google_ux.ipynb)** - Reproduces Table 1 results for Google UX Designer role with full dataset (260 qualified + 260 unqualified resumes). Tests three experimental conditions comparing Traditional (1-ticket) vs Two-Ticket hiring schemes across 500 iterations. Demonstrates TPR improvements and disparity reductions from the two-ticket approach.
+
+4. **[replicability_notebook_tpr_calculation.ipynb](replicability_notebook_tpr_calculation.ipynb)** - Extension analysis for DoorDash PM role using smaller dataset (50 qualified + 50 unqualified resumes). Performs same binary classification experiments as Claim 3 notebook but with relaxed FPR constraint (5%) due to limited sample size. Shows the two-ticket scheme's effectiveness persists across different dataset sizes.
+
+### Prompt Engineering Comparisons
+
+5. **[replicability_prompt_comparison.py](replicability_prompt_comparison.py)** - Compares resume scores under different prompting strategies:
+   - **Baseline comparison**: No LLM manipulation vs GPT-3.5 modification
+   - **Original vs Chain prompting**: Tests effectiveness of chain-of-thought prompting across GPT-3.5, GPT-4o-mini, and GPT-4o models
+   - **Pipeline analysis**: Evaluates two-stage manipulation (GPT-3.5 + Chain → GPT-4o anti-hallucination)
+
+   Generates three violin plots saved to `figures/` directory showing statistical distributions and quartiles for each condition.
+
+6. **[claim_extension_replicability.py](claim_extension_replicability.py)** - Extended version of the replicability analysis with the same three-figure pipeline as above, using relative paths for portability.
+
+### Path Standardization
+
+All notebooks and scripts have been updated to use relative paths instead of absolute paths, ensuring reproducibility across different systems and directory structures. Key files updated:
+- `comparing_chain_vs_original_prompting_scores.py`
+- `final_replicability_graphs.py`
+- `claim_extension_replicability.py`
+

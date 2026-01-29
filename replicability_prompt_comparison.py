@@ -8,11 +8,14 @@ import os
 # ============================================================
 sns.set(style="whitegrid")
 
-FIG_DIR = "figures"
+# Get the directory where this script is located
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+FIG_DIR = os.path.join(SCRIPT_DIR, "figures")
 os.makedirs(FIG_DIR, exist_ok=True)
 
 PALETTE_BASELINE = {
-    "No LLM": "#1f77b4",
+    "No LLM":"#1f77b4",
     "GPT-3.5": "#ff7f0e",
 }
 
@@ -27,24 +30,24 @@ PALETTE_PIPELINE = {
 }
 
 # ============================================================
-# FILE PATHS (UNCHANGED)
+# FILE PATHS
 # ============================================================
 files_original = {
-    "No LLM": r"C:\Users\sarad\FACT\FACTprojectGroup26\Table1_Experimental_Modified_Resumes\Reproducibility_Scores_UX\Qualified\first_50_scores\ScoresGoogle_UX_no_LLM.csv",
-    "gpt3.5": r"C:\Users\sarad\FACT\FACTprojectGroup26\Table1_Experimental_Modified_Resumes\Reproducibility_Scores_UX\Qualified\first_50_scores\ScoresGoogle_UX_gpt3.5_first_50.csv",
-    "gpt4o_mini": r"C:\Users\sarad\FACT\FACTprojectGroup26\Table1_Experimental_Modified_Resumes\Reproducibility_Scores_UX\Qualified\first_50_scores\ScoresGoogle_UX_gpt4o_mini_first_50.csv",
-    "gpt4o": r"C:\Users\sarad\FACT\FACTprojectGroup26\Table1_Experimental_Modified_Resumes\Reproducibility_Scores_UX\Qualified\first_50_scores\ScoresGoogle_UX_gpt4o_first_50.csv",
+    "No LLM": os.path.join(SCRIPT_DIR, "Table1_Experimental_Modified_Resumes/Reproducibility_Scores_UX/Qualified/first_50_scores/ScoresGoogle_UX_no_LLM.csv"),
+    "gpt3.5": os.path.join(SCRIPT_DIR, "Table1_Experimental_Modified_Resumes/Reproducibility_Scores_UX/Qualified/first_50_scores/ScoresGoogle_UX_gpt3.5_first_50.csv"),
+    "gpt4o_mini": os.path.join(SCRIPT_DIR, "Table1_Experimental_Modified_Resumes/Reproducibility_Scores_UX/Qualified/first_50_scores/ScoresGoogle_UX_gpt4o_mini_first_50.csv"),
+    "gpt4o": os.path.join(SCRIPT_DIR, "Table1_Experimental_Modified_Resumes/Reproducibility_Scores_UX/Qualified/first_50_scores/ScoresGoogle_UX_gpt4o_first_50.csv"),
 }
 
 files_chain = {
-    "gpt3.5": r"C:\Users\sarad\FACT\FACTprojectGroup26\Table1_Experimental_Modified_Resumes\output\input_cvs_Table1_Experimental_Modified_Resumes\Scores_chain_prompting\ScoresGoogle_UX_gpt3.5_Original_File_Original_CV_first_50_optimized_2026-01-21_17-22.csv",
-    "gpt4o_mini": r"C:\Users\sarad\FACT\FACTprojectGroup26\Table1_Experimental_Modified_Resumes\output\input_cvs_Table1_Experimental_Modified_Resumes\Scores_chain_prompting\ScoresGoogle_UX_gpt4o_mini_first_50.csv",
-    "gpt4o": r"C:\Users\sarad\FACT\FACTprojectGroup26\Table1_Experimental_Modified_Resumes\output\input_cvs_Table1_Experimental_Modified_Resumes\Scores_chain_prompting\ScoresGoogle_UX_gpt4o_Original_File_Original_CV_first_260_optimized_2026-01-21_19-55.csv",
+    "gpt3.5": os.path.join(SCRIPT_DIR, "Table1_Experimental_Modified_Resumes/output/input_cvs_Table1_Experimental_Modified_Resumes/Scores_chain_prompting/UX/qualified/ScoresGoogle_UX_gpt3.5_Original_File_Original_CV_first_50_optimized_2026-01-21_17-22.csv"),
+    "gpt4o_mini": os.path.join(SCRIPT_DIR, "Table1_Experimental_Modified_Resumes/output/input_cvs_Table1_Experimental_Modified_Resumes/Scores_chain_prompting/UX/qualified/ScoresGoogle_UX_gpt4o_mini_first_50.csv"),
+    "gpt4o": os.path.join(SCRIPT_DIR, "Table1_Experimental_Modified_Resumes/output/input_cvs_Table1_Experimental_Modified_Resumes/Scores_chain_prompting/UX/qualified/ScoresGoogle_UX_gpt4o_Original_File_Original_CV_first_260_optimized_2026-01-21_19-55.csv"),
 }
 
 pipeline = {
     "GPT-3.5 + Chain": files_chain["gpt3.5"],
-    "GPT-3.5 + Chain → GPT-4o": r"C:\Users\sarad\FACT\FACTprojectGroup26\Table1_Experimental_Modified_Resumes\output\input_cvs_Table1_Experimental_Modified_Resumes\Scores_chain_prompting\ScoresGoogle_UX_gpt4o_chain_on_gpt3.5_antihallucination_Original_File_file_2026-01-21_17-43.csv",
+    "GPT-3.5 + Chain → GPT-4o": os.path.join(SCRIPT_DIR, "Table1_Experimental_Modified_Resumes/output/input_cvs_Table1_Experimental_Modified_Resumes/Scores_chain_prompting/UX/qualified/ScoresGoogle_UX_gpt4o_chain_on_gpt3.5_antihallucination_Original_File_file_2026-01-21_17-43.csv"),
 }
 
 # ============================================================
