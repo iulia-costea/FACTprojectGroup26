@@ -1,20 +1,24 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import os
 
-# --- File paths ---
+# Get the directory where this script is located
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# --- File paths (absolute) ---
 # Original scores
 files_original = {
-    "gpt3.5": r"C:\Users\sarad\FACT\FACTprojectGroup26\Table1_Experimental_Modified_Resumes\Reproducibility_Scores_UX\Qualified\first_50_scores\ScoresGoogle_UX_gpt3.5_first_50.csv",
-    "gpt4o_mini": r"C:\Users\sarad\FACT\FACTprojectGroup26\Table1_Experimental_Modified_Resumes\Reproducibility_Scores_UX\Qualified\first_50_scores\ScoresGoogle_UX_gpt4o_mini_first_50.csv",
-    "gpt4o": r"C:\Users\sarad\FACT\FACTprojectGroup26\Table1_Experimental_Modified_Resumes\Reproducibility_Scores_UX\Qualified\first_50_scores\ScoresGoogle_UX_gpt4o_first_50.csv"
+    "gpt3.5": os.path.join(SCRIPT_DIR, "Reproducibility_Scores_UX/Qualified/first_50_scores/ScoresGoogle_UX_gpt3.5_first_50.csv"),
+    "gpt4o_mini": os.path.join(SCRIPT_DIR, "Reproducibility_Scores_UX/Qualified/first_50_scores/ScoresGoogle_UX_gpt4o_mini_first_50.csv"),
+    "gpt4o": os.path.join(SCRIPT_DIR, "Reproducibility_Scores_UX/Qualified/first_50_scores/ScoresGoogle_UX_gpt4o_first_50.csv")
 }
 
 # Chain prompting scores
 files_chain = {
-    "gpt3.5": r"C:\Users\sarad\FACT\FACTprojectGroup26\Table1_Experimental_Modified_Resumes\output\input_cvs_Table1_Experimental_Modified_Resumes\Scores_chain_prompting\ScoresGoogle_UX_gpt3.5_Original_File_Original_CV_first_50_optimized_2026-01-21_17-22.csv",
-    "gpt4o_mini": r"C:\Users\sarad\FACT\FACTprojectGroup26\Table1_Experimental_Modified_Resumes\output\input_cvs_Table1_Experimental_Modified_Resumes\Scores_chain_prompting\ScoresGoogle_UX_gpt4o_mini_first_50.csv",
-    "gpt4o": r"C:\Users\sarad\FACT\FACTprojectGroup26\Table1_Experimental_Modified_Resumes\output\input_cvs_Table1_Experimental_Modified_Resumes\Scores_chain_prompting\ScoresGoogle_UX_gpt4o_Original_File_Original_CV_first_260_optimized_2026-01-21_19-55.csv"
+    "gpt3.5": os.path.join(SCRIPT_DIR, "output/input_cvs_Table1_Experimental_Modified_Resumes/Scores_chain_prompting/UX/qualified/ScoresGoogle_UX_gpt3.5_Original_File_Original_CV_first_50_optimized_2026-01-21_17-22.csv"),
+    "gpt4o_mini": os.path.join(SCRIPT_DIR, "output/input_cvs_Table1_Experimental_Modified_Resumes/Scores_chain_prompting/UX/qualified/ScoresGoogle_UX_gpt4o_mini_first_50.csv"),
+    "gpt4o": os.path.join(SCRIPT_DIR, "output/input_cvs_Table1_Experimental_Modified_Resumes/Scores_chain_prompting/UX/qualified/ScoresGoogle_UX_gpt4o_Original_File_Original_CV_first_260_optimized_2026-01-21_19-55.csv")
 }
 
 # --- Function to load scores safely ---
@@ -58,7 +62,8 @@ plt.xlabel("Resume Index")
 plt.ylabel("Score")
 plt.legend(title="Version / Model")
 plt.tight_layout()
-plt.show()
+plt.savefig("chain_vs_original_comparison.png", dpi=300, bbox_inches='tight')
+print("\nPlot saved to chain_vs_original_comparison.png")
 
 # --- Optional: Compute differences between original and chain ---
 print("\n=== Differences (Chain - Original) ===")
