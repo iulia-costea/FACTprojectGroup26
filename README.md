@@ -205,7 +205,7 @@ This reproduction includes additional analyses and visualizations beyond the ori
 
 **Claim 1 Analysis: Modification Level Comparison**
 
-1. **[claim1_plus_extra.ipynb](claim1_plus_extra.ipynb)** - Compares the effectiveness of single-stage versus two-stage resume modifications. Analyzes score distributions for resumes modified once (applicant manipulation only) versus resumes modified twice (applicant manipulation followed by hirer manipulation). Demonstrates how iterative LLM modifications impact resume scoring outcomes.
+1. **[claim_1.ipynb](claim1_plus_extra.ipynb)** - Compares the effectiveness of single-stage versus two-stage resume modifications. Analyzes score distributions for resumes modified once (applicant manipulation only) versus resumes modified twice (applicant manipulation followed by hirer manipulation). Demonstrates how iterative LLM modifications impact resume scoring outcomes.
    - **Data sources:**
      - Single modification scores: Resume scores after one LLM manipulation
      - Double modification scores: Resume scores after two sequential LLM manipulations
