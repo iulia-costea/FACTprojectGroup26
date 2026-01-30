@@ -55,10 +55,9 @@ The remaining job descriptions used to generate results for resume scores in Fig
 We used the following LLMs to perform manipulations on our input resumes:
 - GPT-3.5-Turbo-0125
 - GPT-4o-mini
-- GPT-4o-2024-08-06 
+- GPT-4o-2024-08-06
 - Claude-3.5-Sonnet
-- DeepSeek-67B
-- DeepSeek-V3 DeepSeek 
+- DeepSeek V3
 - Mixtral-8x7b-Instruct
 - Llama3.3-70B-Instruct-Turbo
 
@@ -204,15 +203,23 @@ This reproduction includes additional analyses and visualizations beyond the ori
 
 ### Additional Visualizations
 
+**Claim 1 Analysis: Modification Level Comparison**
+
+1. **[claim1_plus_extra.ipynb](claim1_plus_extra.ipynb)** - Compares the effectiveness of single-stage versus two-stage resume modifications. Analyzes score distributions for resumes modified once (applicant manipulation only) versus resumes modified twice (applicant manipulation followed by hirer manipulation). Demonstrates how iterative LLM modifications impact resume scoring outcomes.
+   - **Data sources:**
+     - Single modification scores: Resume scores after one LLM manipulation
+     - Double modification scores: Resume scores after two sequential LLM manipulations
+     - Evaluates the marginal improvement from additional manipulation rounds
+
 **Claim 2 Analysis: Resume Score Distributions Under LLM Manipulations**
 
-1. **[claim_2_doordash_pm.ipynb](claim_2_doordash_pm.ipynb)** - Generates violin plots comparing resume scores under different LLM manipulations for the DoorDash Product Manager role. Visualizes score distributions for 7 manipulation models (Claude-Sonnet-4, DeepSeek-Chat, GPT-3.5-Turbo, GPT-4o, GPT-4o-mini, Llama-3.3-70B, Mixtral-8x7B) vs no manipulation baseline, separated by qualified/unqualified status.
+2. **[claim_2_doordash_pm.ipynb](claim_2_doordash_pm.ipynb)** - Generates violin plots comparing resume scores under different LLM manipulations for the DoorDash Product Manager role. Visualizes score distributions for 7 manipulation models (Claude-Sonnet-4, DeepSeek V3, GPT-3.5-Turbo, GPT-4o, GPT-4o-mini, Llama-3.3-70B, Mixtral-8x7B) vs no manipulation baseline, separated by qualified/unqualified status.
    - **Data sources:**
      - Qualified scores: `Table1_Experimental_Modified_Resumes/Reproducibility_Scores/Qualified/`
      - Unqualified scores: `Table1_Experimental_Modified_Resumes/Reproducibility_Scores/Unqualified/`
      - Uses 50 randomly sampled resumes from each category (qualified PM resumes and unqualified UX resumes)
 
-2. **[claim_2_google_ux.ipynb](claim_2_google_ux.ipynb)** - Same analysis as above but for the Google UX Designer role. Compares scores across the same 7 LLM manipulation models to demonstrate effects of strategic resume modifications.
+3. **[claim_2_google_ux.ipynb](claim_2_google_ux.ipynb)** - Same analysis as above but for the Google UX Designer role. Compares scores across 7 LLM manipulation models (Claude-Sonnet-4, DeepSeek V3, GPT-3.5-Turbo, GPT-4o, GPT-4o-mini, Llama-3.3-70B, Mixtral-8x7B) to demonstrate effects of strategic resume modifications.
    - **Data sources:**
      - Qualified scores: `Table1_Experimental_Modified_Resumes/Reproducibility_Scores_UX/Qualified/`
      - Unqualified scores: `Table1_Experimental_Modified_Resumes/Reproducibility_Scores_UX/Unqualified/`
@@ -220,7 +227,7 @@ This reproduction includes additional analyses and visualizations beyond the ori
 
 **Claim 3 Analysis: Binary Classification Performance**
 
-3. **[claim_3_google_ux.ipynb](claim_3_google_ux.ipynb)** - Reproduces Table 1 results for Google UX Designer role with full dataset (260 qualified + 260 unqualified resumes). Tests three experimental conditions comparing Traditional (1-ticket) vs Two-Ticket hiring schemes across 500 iterations. Demonstrates TPR improvements and disparity reductions from the two-ticket approach.
+4. **[claim_3_google_ux.ipynb](claim_3_google_ux.ipynb)** - Reproduces Table 1 results for Google UX Designer role with full dataset (260 qualified + 260 unqualified resumes). Tests three experimental conditions comparing Traditional (1-ticket) vs Two-Ticket hiring schemes across 500 iterations. Demonstrates TPR improvements and disparity reductions from the two-ticket approach.
    - **Data sources:**
      - Qualified (UX designer resumes): `tpr_calculation_files/Qualified_UX/`
        - Original scores, GPT-3.5, GPT-4o, GPT-4o-mini modifications
@@ -230,7 +237,7 @@ This reproduction includes additional analyses and visualizations beyond the ori
 
 ### Our Contribution/Extension: Prompt Engineering Comparisons
 
-4. **[replicability_notebook_tpr_calculation.ipynb](replicability_notebook_tpr_calculation.ipynb)** - Extension analysis for DoorDash PM role using smaller dataset (50 qualified + 50 unqualified resumes). Performs same binary classification experiments as Claim 3 notebook but with relaxed FPR constraint (5%) due to limited sample size. Results show that with improved chain prompting strategies, the two-ticket scheme does not consistently outperform the traditional approach in TPR improvement, suggesting prompt engineering quality significantly impacts the effectiveness of the two-ticket mechanism.
+5. **[replicability_notebook_tpr_calculation.ipynb](replicability_notebook_tpr_calculation.ipynb)** - Extension analysis for DoorDash PM role using smaller dataset (50 qualified + 50 unqualified resumes). Performs same binary classification experiments as Claim 3 notebook but with relaxed FPR constraint (5%) due to limited sample size. Results show that with improved chain prompting strategies, the two-ticket scheme does not consistently outperform the traditional approach in TPR improvement, suggesting prompt engineering quality significantly impacts the effectiveness of the two-ticket mechanism.
    - **Data sources:**
      - Qualified (PM resumes): `tpr_calculation_files_extension/Qualified_PM/`
        - Original scores, GPT-3.5, GPT-4o, GPT-4o-mini modifications
@@ -238,7 +245,7 @@ This reproduction includes additional analyses and visualizations beyond the ori
      - Unqualified (UX resumes scored for PM role): `tpr_calculation_files_extension/Unqualified_PM/`
      - Smaller 50+50 dataset with relaxed FPR constraint (5%) to enable meaningful differentiation
 
-5. **[replicability_prompt_comparison.py](replicability_prompt_comparison.py)** - Compares resume scores under different prompting strategies:
+6. **[replicability_prompt_comparison.py](replicability_prompt_comparison.py)** - Compares resume scores under different prompting strategies:
    - **Baseline comparison**: No LLM manipulation vs GPT-3.5 modification
    - **Original vs Chain prompting**: Tests effectiveness of chain-of-thought prompting across GPT-3.5, GPT-4o-mini, and GPT-4o models
    - **Pipeline analysis**: Evaluates two-stage manipulation (GPT-3.5 + Chain → GPT-4o anti-hallucination)
@@ -248,7 +255,7 @@ This reproduction includes additional analyses and visualizations beyond the ori
 
    Generates three violin plots saved to `figures/` directory showing statistical distributions and quartiles for each condition.
 
-6. **[claim_extension_replicability.py](claim_extension_replicability.py)** - Extended version of the replicability analysis with the same three-figure pipeline as above, using relative paths for portability. Same data sources as script #5.
+7. **[claim_extension_replicability.py](claim_extension_replicability.py)** - Extended version of the replicability analysis with the same three-figure pipeline as above, using relative paths for portability. Same data sources as script #6.
 
 ### Path Standardization
 
